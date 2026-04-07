@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NLP News Lens</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161820;
+    --surface2: #1e2130;
+    --border: #2a2d3e;
+    --accent: #e8c97e;
+    --accent2: #7eb8e8;
+    --text: #e8eaf0;
+    --muted: #7a7f96;
+    --positive: #5ecb8a;
+    --negative: #e87e7e;
+    --neutral: #7eb8e8;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 22px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: rgba(13,15,20,0.92);
+    backdrop-filter: blur(14px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .tagline {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 56px 5% 36px;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 0.97rem;
+    max-width: 480px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .select-wrap { position: relative; }
+
+  select {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    padding: 11px 44px 11px 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:hover, select:focus { border-color: var(--accent); }
+
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 0.85rem;
+  }
+
+  .btn-analyze {
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.92rem;
+    padding: 11px 28px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-analyze:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-analyze:active { transform: translateY(0); }
+  .btn-analyze:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    padding: 20px 5%;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.4s ease;
+  }
+
+  .stat { text-align: center; }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  /* ── SENTIMENT BAR ── */
+  .sentiment-breakdown {
+    padding: 16px 5% 0;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .sentiment-breakdown-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .sentiment-bar-track {
+    height: 8px;
+    border-radius: 50px;
+    background: var(--surface2);
+    overflow: hidden;
+    display: flex;
+    max-width: 500px;
+    margin: 0 auto 6px;
+  }
+
+  .sentiment-bar-seg {
+    height: 100%;
+    transition: width 0.6s ease;
+  }
+
+  .sentiment-bar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /* ── FILTER SECTION ── */
+  .filter-section {
+    padding: 20px 5% 8px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+  }
+
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #0d0f14; border-color: var(--accent); font-weight: 500; }
+  .filter-btn.active-positive { background: rgba(94,203,138,0.15); color: var(--positive); border-color: var(--positive); font-weight: 500; }
+  .filter-btn.active-negative { background: rgba(232,126,126,0.15); color: var(--negative); border-color: var(--negative); font-weight: 500; }
+  .filter-btn.active-neutral  { background: rgba(126,184,232,0.15); color: var(--neutral);  border-color: var(--neutral);  font-weight: 500; }
+
+  /* Sort select smaller */
+  .sort-wrap { position: relative; }
+  .sort-select {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 6px 32px 6px 14px;
+    border-radius: 50px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .sort-select:hover, .sort-select:focus { border-color: var(--accent); color: var(--text); }
+  .sort-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 0.78rem;
+  }
+
+  .results-count {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 0 5% 12px;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+    padding: 4px 5% 60px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.25s, transform 0.2s;
+    animation: slideUp 0.4s ease both;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .source-chip {
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 0.73rem;
+    font-weight: 500;
+    padding: 3px 11px;
+    border-radius: 50px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .date-chip { font-size: 0.72rem; color: var(--muted); }
+
+  .sentiment-badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 3px 11px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+  }
+  .sentiment-badge.Positive { background: rgba(94,203,138,0.12); color: var(--positive); }
+  .sentiment-badge.Negative { background: rgba(232,126,126,0.12); color: var(--negative); }
+  .sentiment-badge.Neutral  { background: rgba(126,184,232,0.12); color: var(--neutral); }
+
+  .cluster-label {
+    font-size: 0.66rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .summary {
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: #c8cad6;
+    flex: 1;
+  }
+
+  .keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .kw-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 50px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .card:hover .kw-tag { color: var(--accent2); border-color: var(--accent2); }
+
+  .read-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    padding: 7px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .read-btn:hover { background: var(--accent); color: #0d0f14; border-color: var(--accent); }
+
+  /* ── SPINNER ── */
+  .spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .spinner {
+    width: 34px; height: 34px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  .error-msg { text-align: center; padding: 60px 20px; color: var(--negative); font-size: 0.95rem; }
+  .empty-msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.95rem; grid-column: 1 / -1; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 5%;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.76rem;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">News<span>Lens</span></div>
+  <div class="tagline">NLP · TextRank · DBSCAN</div>
+</header>
+
+<div class="hero">
+  <h1>Intelligent News<br/><em>Summarization</em></h1>
+  <p>Pick a topic, let NLP do the rest — TextRank summaries, keyword extraction, sentiment analysis, and automatic clustering.</p>
+
+  <div class="controls">
+    <div class="select-wrap">
+      <select id="domain">
+        <option value="t20">🏏 T20 Cricket</option>
+        <option value="trade">💼 Trade Wars</option>
+        <option value="quantum">⚛️ Quantum Computing</option>
+        <option value="space">🚀 Space</option>
+        <option value="nobel">🏆 Nobel Prize</option>
+      </select>
+    </div>
+    <button class="btn-analyze" id="analyzeBtn" onclick="fetchNews()">Analyze</button>
+  </div>
+</div>
+
+<div id="statsBar"></div>
+<div id="sentimentBreakdown"></div>
+<div id="filterSection"></div>
+<div id="resultsCount"></div>
+<div id="output"></div>
+
+<footer>Built with TextRank · DBSCAN · TextBlob · NewsAPI</footer>
+
+<script>
+const BACKEND_URL = "http://127.0.0.1:5000";
+let allData = [];
+let activeCluster = 'all';
+let activeSentiment = 'all';
+let activeSort = 'default';
+
+async function fetchNews() {
+  const domain = document.getElementById("domain").value;
+  const btn = document.getElementById("analyzeBtn");
+
+  btn.disabled = true;
+  btn.textContent = "Analyzing…";
+
+  // Reset state
+  activeCluster = 'all';
+  activeSentiment = 'all';
+  activeSort = 'default';
+
+  document.getElementById("statsBar").innerHTML = "";
+  document.getElementById("sentimentBreakdown").innerHTML = "";
+  document.getElementById("filterSection").innerHTML = "";
+  document.getElementById("resultsCount").innerHTML = "";
+  document.getElementById("output").innerHTML = `
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+      <span>Fetching & analyzing news…</span>
+    </div>`;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/get-news?domain=${domain}`);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      document.getElementById("output").innerHTML = `<div class="error-msg">⚠️ API Error. Please try again.</div>`;
+      return;
+    }
+
+    allData = data;
+    renderStats(data);
+    renderSentimentBreakdown(data);
+    renderFilterSection(data);
+    applyFilters();
+
+  } catch (err) {
+    document.getElementById("output").innerHTML = `<div class="error-msg">⚠️ Could not reach the server. Is the backend running?</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Analyze";
+  }
+}
+
+function renderStats(data) {
+  const pos = data.filter(d => d.sentiment === "Positive").length;
+  const neg = data.filter(d => d.sentiment === "Negative").length;
+  const neu = data.filter(d => d.sentiment === "Neutral").length;
+
+  document.getElementById("statsBar").innerHTML = `
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-num">${data.length}</div>
+        <div class="stat-label">Articles</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">${data[0].total_clusters}</div>
+        <div class="stat-label">Clusters</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="color:var(--positive)">${pos}</div>
+        <div class="stat-label">Positive</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="color:var(--neutral)">${neu}</div>
+        <div class="stat-label">Neutral</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="color:var(--negative)">${neg}</div>
+        <div class="stat-label">Negative</div>
+      </div>
+    </div>`;
+}
+
+function renderSentimentBreakdown(data) {
+  const total = data.length;
+  const pos = data.filter(d => d.sentiment === "Positive").length;
+  const neg = data.filter(d => d.sentiment === "Negative").length;
+  const neu = data.filter(d => d.sentiment === "Neutral").length;
+
+  const posW = ((pos / total) * 100).toFixed(1);
+  const neuW = ((neu / total) * 100).toFixed(1);
+  const negW = ((neg / total) * 100).toFixed(1);
+
+  document.getElementById("sentimentBreakdown").innerHTML = `
+    <div class="sentiment-breakdown">
+      <div class="sentiment-breakdown-label">Sentiment Breakdown</div>
+      <div class="sentiment-bar-track">
+        <div class="sentiment-bar-seg" style="width:${posW}%; background:var(--positive);"></div>
+        <div class="sentiment-bar-seg" style="width:${neuW}%; background:var(--neutral);"></div>
+        <div class="sentiment-bar-seg" style="width:${negW}%; background:var(--negative);"></div>
+      </div>
+      <div class="sentiment-bar-legend">
+        <span><span class="legend-dot" style="background:var(--positive)"></span>Positive ${posW}%</span>
+        <span><span class="legend-dot" style="background:var(--neutral)"></span>Neutral ${neuW}%</span>
+        <span><span class="legend-dot" style="background:var(--negative)"></span>Negative ${negW}%</span>
+      </div>
+    </div>`;
+}
+
+function renderFilterSection(data) {
+  const clusters = [...new Set(data.map(d => d.cluster))].sort((a, b) => a - b);
+
+  let clusterBtns = `<button class="filter-btn active" id="cb-all" onclick="setCluster('all', this)">All</button>`;
+  clusters.forEach(c => {
+    const label = c === -1 ? "Other" : `Cluster ${c}`;
+    clusterBtns += `<button class="filter-btn" id="cb-${c}" onclick="setCluster(${c}, this)">${label}</button>`;
+  });
+
+  document.getElementById("filterSection").innerHTML = `
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-group-label">Cluster</span>
+          ${clusterBtns}
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">Sentiment</span>
+          <button class="filter-btn active" id="sb-all"      onclick="setSentiment('all', this)">All</button>
+          <button class="filter-btn"        id="sb-Positive" onclick="setSentiment('Positive', this)">😊 Positive</button>
+          <button class="filter-btn"        id="sb-Neutral"  onclick="setSentiment('Neutral', this)">😐 Neutral</button>
+          <button class="filter-btn"        id="sb-Negative" onclick="setSentiment('Negative', this)">😟 Negative</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">Sort</span>
+          <div class="sort-wrap">
+            <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+              <option value="default">Default</option>
+              <option value="date-desc">Date (Newest)</option>
+              <option value="date-asc">Date (Oldest)</option>
+              <option value="sentiment">Sentiment</option>
+              <option value="cluster">Cluster</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function setCluster(cluster, btn) {
+  activeCluster = cluster;
+  document.querySelectorAll('[id^="cb-"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function setSentiment(sentiment, btn) {
+  activeSentiment = sentiment;
+  document.querySelectorAll('[id^="sb-"]').forEach(b => {
+    b.classList.remove('active', 'active-positive', 'active-negative', 'active-neutral');
+  });
+  if (sentiment === 'Positive') btn.classList.add('active-positive');
+  else if (sentiment === 'Negative') btn.classList.add('active-negative');
+  else if (sentiment === 'Neutral') btn.classList.add('active-neutral');
+  else btn.classList.add('active');
+  applyFilters();
+}
+
+function setSort(value) {
+  activeSort = value;
+  applyFilters();
+}
+
+function applyFilters() {
+  let filtered = [...allData];
+
+  // Cluster filter
+  if (activeCluster !== 'all') {
+    filtered = filtered.filter(d => d.cluster === activeCluster);
+  }
+
+  // Sentiment filter
+  if (activeSentiment !== 'all') {
+    filtered = filtered.filter(d => d.sentiment === activeSentiment);
+  }
+
+  // Sort
+  if (activeSort === 'date-desc') {
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } else if (activeSort === 'date-asc') {
+    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+  } else if (activeSort === 'sentiment') {
+    const order = { Positive: 0, Neutral: 1, Negative: 2 };
+    filtered.sort((a, b) => order[a.sentiment] - order[b.sentiment]);
+  } else if (activeSort === 'cluster') {
+    filtered.sort((a, b) => a.cluster - b.cluster);
+  }
+
+  // Results count
+  document.getElementById("resultsCount").innerHTML =
+    `<div class="results-count" style="padding-left:5%">Showing ${filtered.length} of ${allData.length} articles</div>`;
+
+  renderCards(filtered);
+}
+
+function renderCards(data) {
+  const output = document.getElementById("output");
+
+  if (!data.length) {
+    output.innerHTML = `<div class="grid"><div class="empty-msg">No articles match this filter.</div></div>`;
+    return;
+  }
+
+  const cards = data.map((item, i) => {
+    const clusterLabel = item.cluster === -1 ? "Other" : `Cluster ${item.cluster}`;
+    const keywords = (item.keywords || []).map(k => `<span class="kw-tag">${k}</span>`).join('');
+
+    return `
+      <div class="card" style="animation-delay:${i * 0.05}s">
+        <div class="card-meta">
+          <span class="source-chip">${item.source}</span>
+          <span class="date-chip">${item.date}</span>
+        </div>
+        <div class="card-meta">
+          <span class="cluster-label">${clusterLabel}</span>
+          <span class="sentiment-badge ${item.sentiment}">${item.sentiment}</span>
+        </div>
+        <p class="summary">${item.summary}</p>
+        <div class="keywords">${keywords}</div>
+        <a class="read-btn" href="${item.url}" target="_blank" rel="noopener">Read Full Article →</a>
+      </div>`;
+  });
+
+  output.innerHTML = `<div class="grid">${cards.join('')}</div>`;
+}
+</script>
+</body>
+</html>
