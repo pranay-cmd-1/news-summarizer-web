@@ -100,7 +100,7 @@ async function fetchNews() {
     outputDiv.innerHTML = "Loading...";
 
     try {
-        const res = await fetch(`https://news-summarizer-3lx8.onrender.com/get-news?domain=${domain}`);
+        const res = await fetch(`https://news-summarizer-6o3b.onrender.com/get-news?domain=${domain}`);
         window.newsData = await res.json();
 
         const totalClusters = window.newsData[0].total_clusters;
